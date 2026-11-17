@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <!-- Brand Icon: Black & Deep Blue Shield with Retain Anchor -->
+  <g id="icon">
+    <rect x="2" y="4" width="40" height="40" rx="10" fill="#0B132B" stroke="#1D4ED8" stroke-width="2"/>
+    <!-- Deep Blue Glow Accent -->
+    <path d="M22 10L34 16V25C34 31.5 28.9 36.8 22 38C15.1 36.8 10 31.5 10 25V16L22 10Z" fill="url(#blue_grad)" fill-opacity="0.25" stroke="#2563EB" stroke-width="2" stroke-linejoin="round"/>
+    <!-- Center Keep Loop -->
+    <path d="M18 24C18 21.79 19.79 20 22 20C24.21 20 26 21.79 26 24V28C26 30.21 24.21 32 22 32C19.79 32 18 30.21 18 28V24Z" stroke="#60A5FA" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="22" cy="24" r="2" fill="#3B82F6"/>
+  </g>
+  <!-- Brand Text: Bold Geometric Sans -->
+  <text x="52" y="27" fill="#FFFFFF" font-family="'Montserrat', sans-serif" font-size="17" font-weight="800" letter-spacing="-0.5">HOLD<tspan fill="#3B82F6"> KEEPERS</tspan></text>
+  <text x="52" y="38" fill="#94A3B8" font-family="'Montserrat', sans-serif" font-size="8.5" font-weight="600" letter-spacing="1.2">STRIPE CHURN DEFENSE</text>
+  <defs>
+    <linearGradient id="blue_grad" x1="10" y1="10" x2="34" y2="38" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D4ED8"/>
+      <stop offset="1" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+</svg>

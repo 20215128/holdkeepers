@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+.vercel/
+
+# Don't commit lead emails if you make repo public
+data/*.json
+!data/waitlist.json
+data/*.csv
+!data/waitlist.csv

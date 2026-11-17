@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hold Keepers — Stop the silent revenue leak at the cancel button</title>
+  <meta name="description" content="Most Stripe SaaS let customers cancel in one click. No offer, no pause, no second chance. Hold Keepers steps in with a reason-based offer — and applies it in Stripe automatically.">
+
+  <link rel="icon" type="image/png" href="logo.png">
+  <meta property="og:title" content="Hold Keepers — Stop the Silent Revenue Leak">
+  <meta property="og:description" content="Hold Keepers steps in before your Stripe subscribers cancel — with a tailored offer that applies automatically.">
+  <meta property="og:type" content="website">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Montserrat"', 'system-ui', 'sans-serif'],
+            body: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50:  '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+              950: '#172554',
+            },
+          },
+          boxShadow: {
+            'glow':     '0 0 32px -6px rgba(37,99,235,0.28)',
+            'glow-lg':  '0 0 56px -12px rgba(29,78,216,0.22)',
+            'card':     '0 1px 3px rgba(0,0,0,0.05), 0 8px 24px -6px rgba(0,0,0,0.07)',
+            'card-hover':'0 12px 32px -6px rgba(37,99,235,0.12)',
+            'card-blue':'0 4px 24px -4px rgba(37,99,235,0.13)',
+          },
+          keyframes: {
+            'slide-in': {
+              '0%':   { opacity:'0', transform:'translateY(14px) scale(0.97)' },
+              '100%': { opacity:'1', transform:'translateY(0) scale(1)' },
+            },
+          },
+          animation: {
+            'slide-in': 'slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar { width: 7px; }
+    ::-webkit-scrollbar-track { background: #f8fafc; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2563eb; }
+
+    /* Light subtle grid */
+    .grid-pattern {
+      background-size: 44px 44px;
+      background-image:
+        linear-gradient(to right,  rgba(15,23,42,0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15,23,42,0.035) 1px, transparent 1px);
+    }
+
+    /* ── Scroll Reveal Transitions ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Stagger Delays */
+    .delay-100 { transition-delay: 100ms; }
+    .delay-150 { transition-delay: 150ms; }
+    .delay-200 { transition-delay: 200ms; }
+    .delay-250 { transition-delay: 250ms; }
+    .delay-300 { transition-delay: 300ms; }
+    .delay-350 { transition-delay: 350ms; }
+    .delay-400 { transition-delay: 400ms; }
+
+    /* ── Hero Entrance Cascades ── */
+    @keyframes hero-fade-up {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-hero-1 { animation: hero-fade-up 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both; }
+    .animate-hero-2 { animation: hero-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both; }
+    .animate-hero-3 { animation: hero-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.30s both; }
+    .animate-hero-4 { animation: hero-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.42s both; }
+    .animate-hero-5 { animation: hero-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.54s both; }
+
+    /* ── Interactive Cards Micro-Lift ── */
+    .lcard, .compare-col {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform, box-shadow;
+    }
+    .lcard:hover {
+      transform: translateY(-4px);
+      border-color: #bfdbfe;
+      box-shadow: 0 12px 30px -8px rgba(37,99,235,0.12);
+    }
+
+    /* Comparison columns */
+    .compare-col { border-radius: 16px; }
+    .compare-bad  { background:#fff8f8; border: 1.5px solid #fecaca; }
+    .compare-bad:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px -8px rgba(239,68,68,0.12);
+    }
+    .compare-good { background:#f0f9ff; border: 1.5px solid #bfdbfe; }
+    .compare-good:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px -8px rgba(37,99,235,0.14);
+    }
+
+    /* Sim buttons transition */
+    .reason-btn {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
+    }
+    .reason-btn:hover {
+      transform: translateX(4px);
+    }
+    .reason-btn-on  { background:#eff6ff; border-color:#2563eb; color:#1d4ed8; transform: translateX(4px); }
+    .reason-btn-off { background:#f8fafc; border-color:#e2e8f0; color:#475569; }
+    .reason-btn-off:hover { border-color:#93c5fd; color:#1e40af; }
+
+    /* Offer card stage content micro-transition */
+    .offer-stage {
+      transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+    .offer-stage.stage-transition {
+      opacity: 0.25;
+      transform: scale(0.985);
+    }
+
+    /* Keep Button Pulse */
+    .btn-keep-pulse {
+      box-shadow: 0 0 0 0 rgba(37,99,235,0.4);
+      animation: keep-pulse 2.4s infinite;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes keep-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(37,99,235,0.4); }
+      60%  { box-shadow: 0 0 0 12px rgba(37,99,235,0); }
+      100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+    }
+    .btn-accepted {
+      background-color: #059669 !important;
+      border-color: #059669 !important;
+      box-shadow: 0 0 28px -4px rgba(16, 185, 129, 0.45) !important;
+      transform: scale(1.015);
+      animation: none !important;
+    }
+
+    /* Webhook executed accordion-like expansion */
+    #stripe-toast {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(-8px);
+      transition: max-height 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), padding 0.32s ease;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+    #stripe-toast.is-open {
+      max-height: 150px;
+      opacity: 1;
+      transform: translateY(0);
+      padding: 1rem;
+    }
+
+    /* FAQ Details smooth styling */
+    details {
+      transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+    }
+    details[open] {
+      border-color: #93c5fd;
+      box-shadow: 0 8px 24px -6px rgba(37,99,235,0.08);
+    }
+    details summary::-webkit-details-marker { display:none; }
+    details[open] .faq-arrow { transform: rotate(180deg); }
+    .faq-arrow { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+    details[open] summary ~ * {
+      animation: details-sweep 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes details-sweep {
+      0%   { opacity: 0; transform: translateY(-6px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header scroll transition */
+    header {
+      transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    header.scrolled {
+      background-color: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08);
+      border-color: rgba(226, 232, 240, 0.9);
+    }
+
+    /* Price box transition */
+    .price-box { transition: all 0.25s ease; }
+    .section-divider { border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 font-body antialiased selection:bg-brand-600 selection:text-white relative overflow-x-hidden min-h-screen">
+
+  <!-- Background -->
+  <div class="fixed inset-0 grid-pattern pointer-events-none z-0"></div>
+  <div class="fixed top-0 left-0 right-0 h-[560px] bg-gradient-to-b from-blue-50/80 via-blue-50/20 to-transparent pointer-events-none z-0"></div>
+
+  <!-- ═══ LIVE STRIPE TOAST (fires once after 1.5s) ═══ -->
+  <div id="stripe-live-toast"
+    class="fixed bottom-6 right-6 z-[200] hidden flex-col gap-1.5 bg-white border border-slate-200 rounded-2xl p-4 shadow-card max-w-[270px] animate-slide-in transition-all">
+    <div class="flex items-center gap-2 text-xs font-sans font-bold text-slate-800">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+      Live event stream
+    </div>
+    <div class="flex flex-col gap-1">
+      <div id="toast-line-1" class="hidden flex items-center gap-2 text-xs text-slate-500 transition-opacity duration-300">
+        <svg class="w-3.5 h-3.5 text-brand-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Stripe connected
+      </div>
+      <div id="toast-line-2" class="hidden flex items-center gap-2 text-xs text-slate-500 transition-opacity duration-300">
+        <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+        Offer applied — 30% off coupon
+      </div>
+      <div id="toast-line-3" class="hidden flex items-center gap-2 text-xs font-semibold text-emerald-600 transition-opacity duration-300">
+        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+        Customer retained ✦ MRR saved
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ HEADER ═══ -->
+  <header id="main-header" class="relative z-50 w-full border-b border-slate-200 bg-white/92 backdrop-blur-xl sticky top-0 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between">
+
+      <a href="#" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
+          <img src="logo.png" alt="Hold Keepers" class="w-10 h-10 object-contain">
+        </div>
+        <span class="font-sans font-black text-xl tracking-tight text-slate-900">
+          HOLD<span class="text-brand-600 transition-colors group-hover:text-brand-700">KEEPERS</span>
+        </span>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-500">
+        <a href="#comparison"    class="hover:text-slate-900 transition-colors duration-150">The Problem</a>
+        <a href="#how-it-works"  class="hover:text-slate-900 transition-colors duration-150">How It Works</a>
+        <a href="#demo-preview"  class="hover:text-slate-900 transition-colors duration-150">See It Live</a>
+        <a href="#faq"           class="hover:text-slate-900 transition-colors duration-150">FAQ</a>
+      </nav>
+
+      <a href="#waitlist-form-section"
+        class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-sans font-bold text-white bg-brand-600 hover:bg-brand-700 hover:shadow-glow shadow-sm transition-all duration-200 active:scale-95">
+        Get early access
+      </a>
+    </div>
+  </header>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="relative z-10 pt-28 pb-32 sm:pt-36 sm:pb-40 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="text-center max-w-4xl mx-auto">
+
+      <!-- Badge (animate-hero-1) -->
+      <div class="animate-hero-1 inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-brand-700 text-xs sm:text-sm font-sans font-semibold mb-10 hover:border-brand-300 transition-colors">
+        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse flex-shrink-0"></span>
+        Built for Stripe SaaS founders &amp; indie hackers
+      </div>
+
+      <!-- Headline (animate-hero-2) -->
+      <h1 class="animate-hero-2 font-sans font-black text-5xl sm:text-[64px] lg:text-[80px] tracking-tight text-slate-900 leading-[1.06] mb-8">
+        Stop the silent revenue leak<br class="hidden sm:block">
+        <span class="text-brand-600">at the cancel button.</span>
+      </h1>
+
+      <!-- Subheadline (animate-hero-3) -->
+      <p class="animate-hero-3 text-xl sm:text-2xl text-slate-500 leading-relaxed max-w-3xl mx-auto mb-14 font-normal">
+        Most Stripe SaaS let customers cancel in one click — no offer, no pause, no second chance.
+        <strong class="text-slate-700 font-semibold">Hold Keepers</strong> intercepts the moment,
+        shows a reason-based offer, and applies it in Stripe automatically.
+      </p>
+
+      <!-- Email capture (animate-hero-4) -->
+      <div class="animate-hero-4 max-w-lg mx-auto mb-14">
+        <form id="hero-fast-form" class="flex flex-col sm:flex-row gap-2.5 p-2 rounded-xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover transition-shadow duration-300">
+          <input type="email" id="hero-email" required placeholder="your@email.com"
+            class="flex-1 px-4 py-3.5 bg-transparent text-slate-900 placeholder-slate-400 text-sm font-sans focus:outline-none rounded-lg min-w-0">
+          <button type="submit"
+            class="flex-shrink-0 inline-flex items-center justify-center px-6 py-3.5 rounded-lg text-sm font-sans font-bold text-white bg-brand-600 hover:bg-brand-700 hover:shadow-glow shadow-sm transition-all duration-200 active:scale-[0.98] whitespace-nowrap">
+            Get early access
+            <svg class="w-4 h-4 ml-2 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+        </form>
+      </div>
+
+      <!-- Trust row (animate-hero-5) -->
+      <div class="animate-hero-5 flex flex-wrap items-center justify-center gap-y-3 gap-x-8 text-xs sm:text-sm text-slate-400 font-medium">
+        <span class="flex items-center gap-2 hover:text-slate-600 transition-colors">
+          <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          Recovers 15–35% of voluntary churn
+        </span>
+        <span class="flex items-center gap-2 hover:text-slate-600 transition-colors">
+          <svg class="w-4 h-4 text-brand-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Direct Stripe Connect — no code needed
+        </span>
+        <span class="flex items-center gap-2 hover:text-slate-600 transition-colors">
+          <svg class="w-4 h-4 text-brand-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          Zero credit card data touched
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ COMPARISON — "WHAT YOU'RE MISSING" ═══ -->
+  <section id="comparison" class="relative z-10 py-28 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto section-divider">
+    <div class="text-center max-w-2xl mx-auto mb-16 reveal">
+      <span class="text-xs font-sans font-black tracking-widest text-slate-400 uppercase">What you're missing</span>
+      <h2 class="font-sans font-black text-3xl sm:text-5xl text-slate-900 tracking-tight mt-4 leading-tight">
+        One missing step is costing you<br class="hidden sm:block"> real MRR every day
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+
+      <!-- Without -->
+      <div class="compare-col compare-bad p-8 sm:p-10 reveal delay-100">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          </div>
+          <span class="font-sans font-black text-base text-rose-700 uppercase tracking-wide">Without Hold Keepers</span>
+        </div>
+        <ol class="space-y-6">
+          <li class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-7 h-7 rounded-full bg-rose-100 text-rose-500 font-sans font-black text-xs flex items-center justify-center mt-0.5">1</div>
+            <div>
+              <p class="font-sans font-bold text-slate-800 text-sm">Customer clicks Cancel</p>
+              <p class="text-slate-500 text-xs mt-1 leading-relaxed">No interception, no offer — the request goes straight to Stripe.</p>
+            </div>
+          </li>
+          <li class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-7 h-7 rounded-full bg-rose-100 text-rose-500 font-sans font-black text-xs flex items-center justify-center mt-0.5">2</div>
+            <div>
+              <p class="font-sans font-bold text-slate-800 text-sm">Subscription ends immediately</p>
+              <p class="text-slate-500 text-xs mt-1 leading-relaxed">Stripe cancels. Revenue gone. No warning, no chance to respond.</p>
+            </div>
+          </li>
+          <li class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-7 h-7 rounded-full bg-rose-100 text-rose-500 font-sans font-black text-xs flex items-center justify-center mt-0.5">3</div>
+            <div>
+              <p class="font-sans font-bold text-slate-800 text-sm">You lose the revenue &amp; get no feedback</p>
+              <p class="text-slate-500 text-xs mt-1 leading-relaxed">Maybe a vague exit survey hours later — if you're lucky.</p>
+            </div>
+          </li>
+        </ol>
+        <div class="mt-8 pt-6 border-t border-rose-200">
+          <p class="text-rose-600 font-sans font-bold text-sm">Result: MRR drops silently, month after month.</p>
+        </div>
+      </div>
+
+      <!-- With -->
+      <div class="compare-col compare-good p-8 sm:p-10 relative reveal delay-200">
+        <!-- Live badge -->
+        <div class="absolute -top-3 right-6 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-600 text-white text-[11px] font-sans font-bold shadow-glow">
+          <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+          Live Stripe Sync
+        </div>
+        <div class="flex items-center gap-3 mb-8">
+          <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <span class="font-sans font-black text-base text-brand-700 uppercase tracking-wide">With Hold Keepers</span>
+        </div>
+        <ol class="space-y-6">
+          <li class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-7 h-7 rounded-full bg-brand-100 text-brand-600 font-sans font-black text-xs flex items-center justify-center mt-0.5">1</div>
+            <div>
+              <p class="font-sans font-bold text-slate-800 text-sm">Customer clicks Cancel</p>
+              <p class="text-slate-500 text-xs mt-1 leading-relaxed">Hold Keepers intercepts the action before Stripe is called.</p>
+            </div>
+          </li>
+          <li class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-7 h-7 rounded-full bg-brand-100 text-brand-600 font-sans font-black text-xs flex items-center justify-center mt-0.5">2</div>
+            <div>
+              <p class="font-sans font-bold text-slate-800 text-sm">Sees a tailored, reason-based offer</p>
+              <p class="text-slate-500 text-xs mt-1 leading-relaxed"><span class="text-brand-600 font-semibold">30% off</span> for budget issues · <span class="text-brand-600 font-semibold">Free month</span> for feature gaps · <span class="text-brand-600 font-semibold">Pause</span> for seasonal breaks.</p>
+            </div>
+          </li>
+          <li class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-7 h-7 rounded-full bg-brand-100 text-brand-600 font-sans font-black text-xs flex items-center justify-center mt-0.5">3</div>
+            <div>
+              <p class="font-sans font-bold text-slate-800 text-sm">Many stay — Stripe updates automatically</p>
+              <p class="text-slate-500 text-xs mt-1 leading-relaxed">If accepted, the coupon or pause is applied in Stripe via API instantly. Zero manual work from you.</p>
+            </div>
+          </li>
+        </ol>
+        <div class="mt-8 pt-6 border-t border-blue-200">
+          <p class="text-brand-700 font-sans font-bold text-sm">Result: 15–35% of churns become retained subscribers.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ INTERACTIVE OFFER PREVIEW ═══ -->
+  <section id="demo-preview" class="relative z-10 py-28 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto section-divider">
+    <div class="text-center max-w-2xl mx-auto mb-16 reveal">
+      <span class="text-xs font-sans font-black tracking-widest text-brand-600 uppercase">Interactive Simulation</span>
+      <h2 class="font-sans font-black text-3xl sm:text-5xl text-slate-900 tracking-tight mt-4 leading-tight">
+        What your customer sees<br class="hidden sm:block"> when they try to cancel
+      </h2>
+      <p class="text-slate-500 max-w-xl mx-auto text-base sm:text-lg mt-5 leading-relaxed">
+        Click a cancellation reason — the offer card updates in real time.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-card reveal delay-100">
+
+      <!-- Left: reason selector -->
+      <div class="lg:col-span-5 space-y-3">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-2">
+          <span class="text-xs font-sans font-bold text-slate-400 uppercase tracking-wider">Step 1 — Customer clicks Cancel</span>
+          <span class="text-[11px] font-mono text-brand-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">Demo</span>
+        </div>
+
+        <p class="text-sm text-slate-500 font-medium pb-1">Select a cancellation reason:</p>
+
+        <div class="space-y-2.5" id="reason-selector-container">
+          <button type="button" onclick="setOffer('expensive')" id="btn-reason-expensive"
+            class="reason-btn reason-btn-on w-full text-left px-4 py-3.5 rounded-xl border text-sm font-sans font-semibold flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-base flex-shrink-0">💸</span>
+              <span>"Too expensive / Budget cuts"</span>
+            </div>
+            <span class="selected-badge text-xs font-mono text-brand-600 font-bold flex-shrink-0 ml-2">Selected</span>
+          </button>
+
+          <button type="button" onclick="setOffer('notusing')" id="btn-reason-notusing"
+            class="reason-btn reason-btn-off w-full text-left px-4 py-3.5 rounded-xl border text-sm font-sans font-medium flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-base flex-shrink-0">⏳</span>
+            <span>"Not using it enough right now"</span>
+          </button>
+
+          <button type="button" onclick="setOffer('missingfeature')" id="btn-reason-missingfeature"
+            class="reason-btn reason-btn-off w-full text-left px-4 py-3.5 rounded-xl border text-sm font-sans font-medium flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-base flex-shrink-0">🧩</span>
+            <span>"Missing a feature I need"</span>
+          </button>
+
+          <button type="button" onclick="setOffer('temporary')" id="btn-reason-temporary"
+            class="reason-btn reason-btn-off w-full text-left px-4 py-3.5 rounded-xl border text-sm font-sans font-medium flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-base flex-shrink-0">🏖️</span>
+            <span>"Taking a seasonal break"</span>
+          </button>
+        </div>
+
+        <div class="pt-3">
+          <p class="text-xs text-slate-400 bg-slate-50 p-3.5 rounded-xl border border-slate-200 leading-relaxed">
+            <span class="text-brand-500 font-bold">💡 You set the rules:</span> discount amounts, eligibility, max frequency per customer — all configurable in minutes.
+          </p>
+        </div>
+      </div>
+
+      <!-- Right: offer modal card -->
+      <div class="lg:col-span-7">
+        <div class="relative bg-white border-2 border-brand-200 rounded-2xl shadow-card-blue overflow-hidden">
+
+          <!-- Top colour bar -->
+          <div class="h-1.5 bg-gradient-to-r from-brand-500 to-brand-700"></div>
+
+          <div class="p-6 sm:p-8">
+            <!-- Window chrome -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-rose-400"></span>
+                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+                <span class="text-xs font-mono text-slate-400 ml-3">Hold Keepers — Exit Intercept</span>
+              </div>
+              <!-- Live sync badge -->
+              <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-[11px] font-sans font-bold text-emerald-700">Live Stripe Sync</span>
+              </div>
+            </div>
+
+            <!-- Dynamic Offer content stage with smooth crossfade -->
+            <div id="offer-content-stage" class="offer-stage space-y-5">
+
+              <!-- Reason label -->
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-blue-50 border border-blue-200 text-brand-700 text-xs font-sans font-bold">
+                <span id="offer-tag">REASON: TOO EXPENSIVE</span>
+              </div>
+
+              <!-- Offer headline -->
+              <h3 id="offer-headline" class="font-sans font-black text-xl sm:text-2xl text-slate-900 tracking-tight leading-snug">
+                We'd love to keep you. Here's 30% off for the next 3 months.
+              </h3>
+
+              <!-- Offer description -->
+              <p id="offer-sub" class="text-sm text-slate-500 leading-relaxed">
+                We understand budget constraints. Instead of losing your data and setup, let us lower your rate by 30% for 90 days — no commitment required.
+              </p>
+
+              <!-- Price comparison box -->
+              <div class="price-box rounded-2xl bg-gradient-to-br from-brand-50 to-slate-50 border-2 border-brand-200 p-5">
+                <div class="flex items-center justify-between mb-4">
+                  <span class="text-xs font-sans font-semibold text-slate-500">Your plan: Pro</span>
+                  <span class="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full" id="offer-savings-badge">You save $14.70/mo</span>
+                </div>
+                <!-- Big price display -->
+                <div class="flex items-end gap-3 mb-2">
+                  <span id="offer-new-price" class="font-sans font-black text-5xl text-slate-900 leading-none">$34.30</span>
+                  <div class="pb-1">
+                    <span class="block text-sm text-slate-500 font-medium leading-tight" id="offer-per-period">/ month</span>
+                    <span class="block text-sm text-slate-400 line-through leading-tight" id="offer-old-price">was $49.00</span>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-3 pt-3 border-t border-brand-100" id="offer-stripe-note">Applied via Stripe API · Renews at standard rate after 90 days</p>
+              </div>
+
+              <!-- PRIMARY CTA — large, pulsing, unmissable with click transition -->
+              <button type="button" onclick="simulateAcceptOffer()" id="btn-keep-sub"
+                class="btn-keep-pulse w-full flex items-center justify-center gap-2.5 px-6 py-5 rounded-xl text-base sm:text-lg font-sans font-black text-white bg-brand-600 hover:bg-brand-700 shadow-glow transition-all active:scale-[0.98]">
+                <svg id="btn-keep-icon" class="w-5 h-5 flex-shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                <span id="btn-keep-text">Keep my subscription — Apply 30% Off</span>
+              </button>
+
+              <!-- Secondary cancel link — subtle -->
+              <button type="button"
+                onclick="alert('In production: they continue to your standard Stripe cancellation flow. You still receive their verified reason.')"
+                class="w-full text-center text-xs text-slate-400 hover:text-slate-600 transition-colors py-1 font-medium">
+                No thanks, continue with cancellation
+              </button>
+
+              <!-- Stripe executed toast (smooth expanding container) -->
+              <div id="stripe-toast" class="rounded-xl bg-emerald-50 border border-emerald-200">
+                <div class="flex items-center gap-2 text-emerald-700 font-sans font-bold text-sm">
+                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Stripe API webhook executed
+                </div>
+                <p class="mt-1 text-xs text-slate-500 font-mono">
+                  Coupon <span class="text-slate-800 font-bold">HK_30_OFF_3MO</span> applied to <span class="text-brand-600">cus_9x8abc...</span> — MRR protected: <span class="text-emerald-700 font-bold">$34.30</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PROBLEM SECTION ═══ -->
+  <section class="relative z-10 py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto section-divider">
+    <div class="max-w-2xl mx-auto text-center mb-16 reveal">
+      <span class="text-xs font-sans font-black tracking-widest text-rose-500 uppercase">The silent MRR bleed</span>
+      <h2 class="font-sans font-black text-3xl sm:text-5xl text-slate-900 tracking-tight mt-4 leading-tight">
+        Your cancel button is quietly<br class="hidden sm:block"> costing you revenue
+      </h2>
+      <p class="text-slate-500 mt-5 text-base sm:text-lg leading-relaxed">
+        Acquiring a SaaS customer takes weeks of content, ads, demos, and onboarding. Most founders let them leave in a single frictionless click.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="lcard p-8 sm:p-10 rounded-2xl reveal delay-100">
+        <div class="w-11 h-11 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 mb-6">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </div>
+        <h3 class="font-sans font-bold text-lg text-slate-900 mb-3">Instant, unchecked cancellation</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">
+          The moment a subscriber clicks Cancel, their billing ends. No counter-offer, no negotiation — the relationship just ends.
+        </p>
+      </div>
+
+      <div class="lcard p-8 sm:p-10 rounded-2xl reveal delay-200">
+        <div class="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500 mb-6">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <h3 class="font-sans font-bold text-lg text-slate-900 mb-3">Zero actionable exit data</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">
+          Generic "why are you leaving?" surveys get skipped. You lose real signal on pricing objections, feature gaps, and seasonal drop-offs.
+        </p>
+      </div>
+
+      <div class="lcard p-8 sm:p-10 rounded-2xl reveal delay-300">
+        <div class="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-brand-500 mb-6">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <h3 class="font-sans font-bold text-lg text-slate-900 mb-3">Manual discounting is too slow</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">
+          Emailing churning users hours later with a manual coupon rarely works. By then they've cancelled, deleted their card, and moved on.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ HOW IT WORKS ═══ -->
+  <section id="how-it-works" class="relative z-10 py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto section-divider">
+    <div class="max-w-2xl mx-auto text-center mb-16 reveal">
+      <span class="text-xs font-sans font-black tracking-widest text-brand-600 uppercase">Seamless automation</span>
+      <h2 class="font-sans font-black text-3xl sm:text-5xl text-slate-900 tracking-tight mt-4 leading-tight">
+        Up and running in 4 steps
+      </h2>
+      <p class="text-slate-500 mt-5 text-base sm:text-lg leading-relaxed">
+        From setup to actively saving subscribers in under 10 minutes.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="lcard p-8 rounded-2xl flex flex-col justify-between reveal delay-100">
+        <div>
+          <div class="w-11 h-11 rounded-xl bg-brand-600 text-white font-sans font-black flex items-center justify-center text-xl mb-6 shadow-glow">1</div>
+          <h3 class="font-sans font-bold text-base text-slate-900 mb-3">Connect Stripe</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">One-click Stripe Connect. Restricted permissions — only applies approved discounts or pauses.</p>
+        </div>
+        <div class="mt-6 pt-5 border-t border-slate-100 text-xs font-mono text-brand-500">Takes &lt; 2 minutes</div>
+      </div>
+
+      <div class="lcard p-8 rounded-2xl flex flex-col justify-between reveal delay-200">
+        <div>
+          <div class="w-11 h-11 rounded-xl bg-brand-700 text-white font-sans font-black flex items-center justify-center text-xl mb-6">2</div>
+          <h3 class="font-sans font-bold text-base text-slate-900 mb-3">Set reason rules</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Map reasons to offers: price complaints → 20–30% off, seasonal break → pause, feature gap → founder call.</p>
+        </div>
+        <div class="mt-6 pt-5 border-t border-slate-100 text-xs font-mono text-brand-500">Full offer customization</div>
+      </div>
+
+      <div class="lcard p-8 rounded-2xl flex flex-col justify-between reveal delay-300">
+        <div>
+          <div class="w-11 h-11 rounded-xl bg-brand-800 text-white font-sans font-black flex items-center justify-center text-xl mb-6">3</div>
+          <h3 class="font-sans font-bold text-base text-slate-900 mb-3">Embed the intercept</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Drop a lightweight modal on your billing page — one script tag. No backend code required.</p>
+        </div>
+        <div class="mt-6 pt-5 border-t border-slate-100 text-xs font-mono text-brand-500">1 script tag or redirect</div>
+      </div>
+
+      <div class="lcard p-8 rounded-2xl flex flex-col justify-between reveal delay-400">
+        <div>
+          <div class="w-11 h-11 rounded-xl bg-emerald-500 text-white font-sans font-black flex items-center justify-center text-xl mb-6">4</div>
+          <h3 class="font-sans font-bold text-base text-slate-900 mb-3">Recover your MRR</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">When accepted, Stripe updates instantly. You keep the subscriber and preserve recurring revenue — automatically.</p>
+        </div>
+        <div class="mt-6 pt-5 border-t border-slate-100 text-xs font-mono text-emerald-500">100% automated retention</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ BENEFITS ═══ -->
+  <section id="benefits" class="relative z-10 py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto section-divider">
+    <div class="max-w-2xl mx-auto text-center mb-16 reveal">
+      <span class="text-xs font-sans font-black tracking-widest text-brand-600 uppercase">Founder ROI</span>
+      <h2 class="font-sans font-black text-3xl sm:text-5xl text-slate-900 tracking-tight mt-4 leading-tight">
+        Built for Stripe subscription economics
+      </h2>
+      <p class="text-slate-500 mt-5 text-base sm:text-lg leading-relaxed">
+        A reason-based offer at the moment of cancel is 10× more effective than any re-engagement email sent hours later.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="lcard p-8 sm:p-9 rounded-2xl reveal delay-100">
+        <div class="text-3xl mb-5">📈</div>
+        <h3 class="font-sans font-bold text-base text-slate-900 mb-3">15–35% churn reduction</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">Up to a third of cancellations are driven by short-term cash flow or temporary inactivity. A small concession keeps them in your ecosystem.</p>
+      </div>
+      <div class="lcard p-8 sm:p-9 rounded-2xl reveal delay-150">
+        <div class="text-3xl mb-5">⚡</div>
+        <h3 class="font-sans font-bold text-base text-slate-900 mb-3">Instant Stripe webhook sync</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">No copy-pasting emails or creating manual coupons. The moment they accept, Hold Keepers calls the Stripe API to modify the subscription.</p>
+      </div>
+      <div class="lcard p-8 sm:p-9 rounded-2xl reveal delay-200">
+        <div class="text-3xl mb-5">🛡️</div>
+        <h3 class="font-sans font-bold text-base text-slate-900 mb-3">Anti-abuse guardrails</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">Worried about fake-cancels for a discount? Set cooldown rules — e.g. one retention offer per customer per 12 months, minimum 60-day account age.</p>
+      </div>
+      <div class="lcard p-8 sm:p-9 rounded-2xl reveal delay-250">
+        <div class="text-3xl mb-5">⏸️</div>
+        <h3 class="font-sans font-bold text-base text-slate-900 mb-3">Pause instead of churn</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">Letting users pause 30–60 days prevents payment deletion, keeps their workspace intact, and resumes billing automatically on schedule.</p>
+      </div>
+      <div class="lcard p-8 sm:p-9 rounded-2xl reveal delay-300">
+        <div class="text-3xl mb-5">📊</div>
+        <h3 class="font-sans font-bold text-base text-slate-900 mb-3">Actionable churn analytics</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">Know which plans are most price-sensitive, which features are missing, and how much MRR Hold Keepers is protecting for you each month.</p>
+      </div>
+      <div class="lcard p-8 sm:p-9 rounded-2xl reveal delay-350">
+        <div class="text-3xl mb-5">💻</div>
+        <h3 class="font-sans font-bold text-base text-slate-900 mb-3">Built for indie teams</h3>
+        <p class="text-slate-500 text-sm leading-relaxed">Enterprise retention tools cost $500+/mo and take weeks to onboard. Hold Keepers is transparently priced and accessible to solopreneurs from day one.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ WAITLIST FORM ═══ -->
+  <section id="waitlist-form-section" class="relative z-10 py-28 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto section-divider">
+    <div class="relative rounded-3xl bg-white border border-slate-200 shadow-card p-8 sm:p-14 overflow-hidden reveal">
+      <!-- Top accent bar -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-500 via-brand-600 to-brand-700 rounded-t-3xl"></div>
+
+      <div class="text-center max-w-xl mx-auto mb-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-brand-700 text-xs font-sans font-bold mb-6">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
+          Early access — limited spots
+        </div>
+        <h2 class="font-sans font-black text-3xl sm:text-4xl text-slate-900 tracking-tight leading-tight">
+          Get early access
+        </h2>
+        <p class="text-slate-500 mt-4 text-sm sm:text-base leading-relaxed">
+          Be first in line when Hold Keepers launches. We'll onboard early members hands-on and use your feedback to shape the product.
+        </p>
+      </div>
+
+      <form id="main-waitlist-form" class="space-y-4 max-w-md mx-auto">
+        <div>
+          <label for="form-email" class="block text-xs font-sans font-bold uppercase tracking-wider text-slate-500 mb-2">
+            Email <span class="text-brand-600">*</span>
+          </label>
+          <input type="email" id="form-email" required placeholder="you@yourcompany.com"
+            class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-slate-900 placeholder-slate-400 text-sm font-sans transition-all outline-none">
+        </div>
+
+        <div>
+          <label for="form-stripe" class="block text-xs font-sans font-bold uppercase tracking-wider text-slate-500 mb-2">
+            Are you using Stripe? <span class="font-normal text-slate-400 lowercase">(optional)</span>
+          </label>
+          <select id="form-stripe"
+            class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-slate-800 text-sm font-sans transition-all outline-none">
+            <option value="Yes, live with active subscriptions">Yes, live with active subscriptions</option>
+            <option value="Setting up Stripe now / Pre-launch">Setting up Stripe now / Pre-launch</option>
+            <option value="Using another processor (Paddle, Lemon Squeezy)">Using another processor (Paddle, Lemon Squeezy)</option>
+            <option value="Just exploring options">Just exploring options</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="form-customers" class="block text-xs font-sans font-bold uppercase tracking-wider text-slate-500 mb-2">
+            Paying customers today? <span class="font-normal text-slate-400 lowercase">(optional)</span>
+          </label>
+          <select id="form-customers"
+            class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-slate-800 text-sm font-sans transition-all outline-none">
+            <option value="Pre-revenue / Looking to launch">Pre-revenue / Looking to launch</option>
+            <option value="1 – 50 customers">1 – 50 customers</option>
+            <option value="51 – 250 customers">51 – 250 customers</option>
+            <option value="251 – 1,000 customers">251 – 1,000 customers</option>
+            <option value="1,000+ customers">1,000+ customers</option>
+          </select>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" id="main-submit-btn"
+            class="w-full py-4 px-6 rounded-xl text-base font-sans font-black text-white bg-brand-600 hover:bg-brand-700 hover:shadow-glow shadow-sm transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2">
+            <span>Get early access</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+        </div>
+
+        <p class="text-center text-xs text-slate-400 font-medium pt-1">
+          🔒 No spam. We only email you when early onboarding spots open.
+        </p>
+      </form>
+
+      <!-- Success state -->
+      <div id="waitlist-success" class="hidden text-center max-w-sm mx-auto py-6">
+        <div class="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto mb-6 text-3xl">🎉</div>
+        <h3 class="font-sans font-black text-2xl text-slate-900 mb-2">You're on the list!</h3>
+        <p class="text-slate-500 text-sm mb-7">
+          Spot reserved for <span id="confirmed-email" class="text-brand-600 font-bold"></span>.
+        </p>
+
+        <div class="p-5 rounded-2xl bg-blue-50 border border-blue-200 mb-4">
+          <span class="text-xs font-sans font-bold text-slate-500 uppercase tracking-wider block mb-1">Your queue position</span>
+          <span id="queue-position" class="font-sans font-black text-5xl text-brand-600">#142</span>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 text-left">
+          <span class="text-xs font-sans font-bold text-slate-700 block mb-3">🚀 Move up 3 spots for every founder you invite:</span>
+          <div class="flex items-center gap-2">
+            <input type="text" id="ref-link-input" readonly
+              class="flex-1 px-3 py-2.5 rounded-lg bg-white border border-slate-200 text-xs font-mono text-slate-700 select-all min-w-0">
+            <button type="button" onclick="copyRefLink()" id="copy-ref-btn"
+              class="flex-shrink-0 px-3.5 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-xs font-sans font-bold text-white transition-all duration-200">
+              Copy
+            </button>
+          </div>
+          <div class="flex gap-2 mt-3 pt-3 border-t border-slate-200">
+            <a id="share-twitter-link" target="_blank"
+              class="flex-1 text-center py-2 rounded-md bg-white hover:bg-slate-50 border border-slate-200 text-[11px] font-sans font-semibold text-slate-600 transition-colors">
+              Share on X / Twitter
+            </a>
+            <a id="share-linkedin-link" target="_blank"
+              class="flex-1 text-center py-2 rounded-md bg-white hover:bg-slate-50 border border-slate-200 text-[11px] font-sans font-semibold text-slate-600 transition-colors">
+              Share on LinkedIn
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FAQ ═══ -->
+  <section id="faq" class="relative z-10 py-28 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto section-divider">
+    <div class="text-center mb-14 reveal">
+      <span class="text-xs font-sans font-black tracking-widest text-brand-600 uppercase">FAQ</span>
+      <h2 class="font-sans font-black text-3xl sm:text-4xl text-slate-900 tracking-tight mt-4">Common questions</h2>
+    </div>
+
+    <div class="space-y-3">
+      <details class="lcard rounded-xl p-6 reveal delay-100">
+        <summary class="flex items-center justify-between cursor-pointer font-sans font-bold text-slate-900 text-sm sm:text-base">
+          How does Hold Keepers connect to Stripe?
+          <span class="faq-arrow text-brand-500 text-sm ml-4 flex-shrink-0">▼</span>
+        </summary>
+        <p class="mt-4 text-sm text-slate-500 leading-relaxed">
+          Through official Stripe Connect OAuth. You authorize Hold Keepers in one click with restricted permissions. We only modify coupons, discounts, and subscription pauses when a subscriber explicitly accepts an offer — we never touch credit card data or banking details.
+        </p>
+      </details>
+
+      <details class="lcard rounded-xl p-6 reveal delay-150">
+        <summary class="flex items-center justify-between cursor-pointer font-sans font-bold text-slate-900 text-sm sm:text-base">
+          Can customers abuse this to get endless discounts?
+          <span class="faq-arrow text-brand-500 text-sm ml-4 flex-shrink-0">▼</span>
+        </summary>
+        <p class="mt-4 text-sm text-slate-500 leading-relaxed">
+          No. You have full control over guardrails — e.g. one retention offer per customer per 12 months, minimum 60-day subscription age required. Abuse is blocked at the rule level before an offer is ever shown.
+        </p>
+      </details>
+
+      <details class="lcard rounded-xl p-6 reveal delay-200">
+        <summary class="flex items-center justify-between cursor-pointer font-sans font-bold text-slate-900 text-sm sm:text-base">
+          Do I need to write backend code?
+          <span class="faq-arrow text-brand-500 text-sm ml-4 flex-shrink-0">▼</span>
+        </summary>
+        <p class="mt-4 text-sm text-slate-500 leading-relaxed">
+          Not at all. Hold Keepers provides a 1-line modal script and a hosted cancel-page URL. Just point your "Cancel Subscription" button at Hold Keepers — the webhook handles everything else automatically.
+        </p>
+      </details>
+
+      <details class="lcard rounded-xl p-6 reveal delay-250">
+        <summary class="flex items-center justify-between cursor-pointer font-sans font-bold text-slate-900 text-sm sm:text-base">
+          What if a customer still wants to cancel?
+          <span class="faq-arrow text-brand-500 text-sm ml-4 flex-shrink-0">▼</span>
+        </summary>
+        <p class="mt-4 text-sm text-slate-500 leading-relaxed">
+          They're passed to your standard Stripe cancellation flow — no friction, no dark patterns. You still receive their verified reason so you know exactly why they left.
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="relative z-10 border-t border-slate-200 bg-white py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-5">
+      <div class="flex items-center gap-3">
+        <img src="logo.png" alt="Hold Keepers" class="w-8 h-8 object-contain">
+        <span class="font-sans font-black text-base text-slate-900">HOLD<span class="text-brand-600">KEEPERS</span></span>
+        <span class="text-xs text-slate-400 ml-1">© 2026</span>
+      </div>
+      <div class="flex items-center gap-6 text-xs text-slate-400 font-sans font-semibold">
+        <a href="#waitlist-form-section" class="hover:text-slate-700 transition-colors">Get early access</a>
+        <a href="#how-it-works"          class="hover:text-slate-700 transition-colors">How It Works</a>
+        <a href="/api/waitlist/export"   class="text-brand-500 hover:text-brand-700 font-mono transition-colors">Admin Export</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══ JAVASCRIPT ═══ -->
+  <script>
+    // ── 1. Scroll-Triggered Reveal Animations ─────────────────────────────
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -40px 0px', threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+
+    // ── 2. Sticky Header Scroll Shadow ────────────────────────────────────
+    const headerEl = document.getElementById('main-header');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 15) {
+        headerEl.classList.add('scrolled');
+      } else {
+        headerEl.classList.remove('scrolled');
+      }
+    }, { passive: true });
+
+
+    // ── 3. Live Stripe Toast — fires once after 1.5s, fades after 7s ─────
+    setTimeout(() => {
+      const toast = document.getElementById('stripe-live-toast');
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+
+      const lines = ['toast-line-1', 'toast-line-2', 'toast-line-3'];
+      lines.forEach((id, i) => {
+        setTimeout(() => {
+          const l = document.getElementById(id);
+          l.classList.remove('hidden');
+          l.classList.add('flex');
+        }, i * 650);
+      });
+
+      setTimeout(() => {
+        toast.style.transition = 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(12px)';
+        setTimeout(() => toast.remove(), 650);
+      }, 7000);
+    }, 1500);
+
+
+    // ── 4. Offer Card Simulator Data & Micro-transitions ─────────────────
+    const offerConfigs = {
+      expensive: {
+        tag:          'REASON: TOO EXPENSIVE',
+        headline:     "We'd love to keep you. Here's 30% off for the next 3 months.",
+        sub:          "We understand budget constraints. Instead of losing your data and setup, let us lower your rate by 30% for 90 days — no commitment required.",
+        newPrice:     '$34.30',
+        perPeriod:    '/ month',
+        oldPrice:     'was $49.00',
+        savingsBadge: 'You save $14.70/mo',
+        stripeNote:   'Applied via Stripe API · Renews at standard rate after 90 days',
+        btnText:      'Keep my subscription — Apply 30% Off',
+      },
+      notusing: {
+        tag:          'REASON: NOT USING IT ENOUGH',
+        headline:     "Busy right now? Pause billing for 60 days — completely free.",
+        sub:          "Keep all your data, settings, and history intact. Zero charges during the pause. Your plan resumes automatically when you're ready.",
+        newPrice:     '$0',
+        perPeriod:    'for 60 days',
+        oldPrice:     'was $49.00/mo',
+        savingsBadge: 'Full savings for 60 days',
+        stripeNote:   'Subscription paused via Stripe API · Resumes automatically',
+        btnText:      'Pause my subscription — Keep My Data',
+      },
+      missingfeature: {
+        tag:          'REASON: MISSING FEATURE',
+        headline:     "Let us build it for you. Get 1 free month while we ship it.",
+        sub:          "Book a 15-minute call with our product team. We'll credit your account with 1 free month and prioritise your request on our next sprint.",
+        newPrice:     '$0',
+        perPeriod:    'next billing cycle',
+        oldPrice:     'was $49.00',
+        savingsBadge: 'Full month free',
+        stripeNote:   '100% credit applied via Stripe API · Normal billing resumes after',
+        btnText:      'Book founder call — Get 1 Month Free',
+      },
+      temporary: {
+        tag:          'REASON: SEASONAL BREAK',
+        headline:     "Downgrade to our Free Hibernation Tier — don't delete your data.",
+        sub:          "Switch to our free standby plan. Your workspace, webhook endpoints, and data stay active at zero cost. Resume anytime.",
+        newPrice:     '$0',
+        perPeriod:    '/ month on Free Tier',
+        oldPrice:     'was $49.00',
+        savingsBadge: 'Everything preserved',
+        stripeNote:   'Plan downgraded via Stripe API · Upgrade anytime',
+        btnText:      'Switch to Free Hibernation Tier',
+      }
+    };
+
+    function setOffer(key) {
+      const c = offerConfigs[key];
+      if (!c) return;
+
+      const stage = document.getElementById('offer-content-stage');
+      if (stage) stage.classList.add('stage-transition');
+
+      // Reset all buttons
+      document.querySelectorAll('.reason-btn').forEach(btn => {
+        btn.className = btn.className.replace('reason-btn-on', 'reason-btn-off');
+        const badge = btn.querySelector('.selected-badge');
+        if (badge) badge.remove();
+      });
+
+      // Activate selected button
+      const active = document.getElementById('btn-reason-' + key);
+      if (active) {
+        active.className = active.className.replace('reason-btn-off', 'reason-btn-on');
+        const badge = document.createElement('span');
+        badge.className = 'selected-badge text-xs font-mono text-brand-600 font-bold flex-shrink-0 ml-2';
+        badge.textContent = 'Selected';
+        active.appendChild(badge);
+      }
+
+      // Smooth content swap
+      setTimeout(() => {
+        document.getElementById('offer-tag').textContent          = c.tag;
+        document.getElementById('offer-headline').textContent     = c.headline;
+        document.getElementById('offer-sub').textContent          = c.sub;
+        document.getElementById('offer-new-price').textContent    = c.newPrice;
+        document.getElementById('offer-per-period').textContent   = c.perPeriod;
+        document.getElementById('offer-old-price').textContent    = c.oldPrice;
+        document.getElementById('offer-savings-badge').textContent = c.savingsBadge;
+        document.getElementById('offer-stripe-note').textContent  = c.stripeNote;
+        document.getElementById('btn-keep-text').textContent      = c.btnText;
+
+        const toast = document.getElementById('stripe-toast');
+        toast.classList.remove('is-open');
+
+        const btn = document.getElementById('btn-keep-sub');
+        btn.classList.remove('btn-accepted');
+
+        if (stage) stage.classList.remove('stage-transition');
+      }, 120);
+    }
+
+    function simulateAcceptOffer() {
+      const btn = document.getElementById('btn-keep-sub');
+      const btnText = document.getElementById('btn-keep-text');
+      const toast = document.getElementById('stripe-toast');
+
+      // Visual success state on button
+      btn.classList.add('btn-accepted');
+      btnText.textContent = 'Offer Applied in Stripe!';
+
+      // Slide down webhook confirmation
+      toast.classList.add('is-open');
+
+      // Auto-revert button after 4s
+      setTimeout(() => {
+        btn.classList.remove('btn-accepted');
+        const currentKey = document.querySelector('.reason-btn-on')?.id.replace('btn-reason-', '') || 'expensive';
+        btnText.textContent = offerConfigs[currentKey]?.btnText || 'Keep my subscription';
+      }, 4500);
+    }
+
+
+    // ── 5. Hero fast-form → scroll & prefill ──────────────────────────────
+    document.getElementById('hero-fast-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('hero-email').value.trim();
+      if (!email) return;
+      document.getElementById('form-email').value = email;
+      document.getElementById('waitlist-form-section').scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => {
+        const input = document.getElementById('form-email');
+        input.focus();
+        input.classList.add('ring-2', 'ring-brand-500/40');
+        setTimeout(() => input.classList.remove('ring-2', 'ring-brand-500/40'), 1500);
+      }, 500);
+    });
+
+
+    // ── 6. Referral param from URL ─────────────────────────────────────────
+    const refCodeParam = new URLSearchParams(window.location.search).get('ref') || null;
+
+
+    // ── 7. Main waitlist form submission ──────────────────────────────────
+    document.getElementById('main-waitlist-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn           = document.getElementById('main-submit-btn');
+      const email         = document.getElementById('form-email').value.trim();
+      const usingStripe   = document.getElementById('form-stripe').value;
+      const customerCount = document.getElementById('form-customers').value;
+
+      btn.disabled = true;
+      btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>Saving your spot…`;
+
+      try {
+        const res  = await fetch('/api/waitlist', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ email, usingStripe, customerCount, referredBy: refCodeParam })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          document.getElementById('main-waitlist-form').classList.add('hidden');
+          const success = document.getElementById('waitlist-success');
+          success.classList.remove('hidden');
+          success.classList.add('animate-slide-in');
+
+          document.getElementById('confirmed-email').textContent = data.email;
+          document.getElementById('queue-position').textContent  = '#' + data.position;
+
+          const shareUrl = window.location.origin + window.location.pathname + '?ref=' + data.referralCode;
+          document.getElementById('ref-link-input').value = shareUrl;
+
+          const tweet = encodeURIComponent("I joined the Hold Keepers waitlist — it stops Stripe SaaS churn with reason-based retention offers. Join here:");
+          document.getElementById('share-twitter-link').href  = `https://twitter.com/intent/tweet?text=${tweet}&url=${encodeURIComponent(shareUrl)}`;
+          document.getElementById('share-linkedin-link').href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+
+          success.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          alert(data.error || 'Something went wrong. Please try again.');
+          btn.disabled  = false;
+          btn.innerHTML = 'Get early access <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
+        }
+      } catch (err) {
+        alert('Network error. Please try again.');
+        btn.disabled  = false;
+        btn.innerHTML = 'Get early access <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
+      }
+    });
+
+
+    // ── 8. Copy referral link with micro-feedback ───────────────────────────
+    function copyRefLink() {
+      const inp = document.getElementById('ref-link-input');
+      inp.select();
+      navigator.clipboard.writeText(inp.value);
+      const btn = document.getElementById('copy-ref-btn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('bg-emerald-500');
+      btn.classList.remove('bg-brand-600');
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('bg-emerald-500');
+        btn.classList.add('bg-brand-600');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
