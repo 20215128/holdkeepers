@@ -27,7 +27,16 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { email, usingStripe, customerCount, referredBy } = req.body || {};
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        body = {};
+      }
+    }
+
+    const { email, usingStripe, customerCount, referredBy } = body || {};
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return res.status(400).json({ success: false, error: 'Valid email is required.' });
@@ -53,7 +62,7 @@ module.exports = async (req, res) => {
 
     // If a webhook URL is configured (Discord, Slack, Zapier, Make, or Google Sheets Apps Script)
     const webhookUrl = process.env.NOTIFICATION_WEBHOOK || process.env.DISCORD_WEBHOOK || process.env.SLACK_WEBHOOK;
-    if (webhookUrl) {
+    if (webhookUrl && typeof fetch !== 'undefined') {
       try {
         const payload = webhookUrl.includes('discord.com')
           ? {

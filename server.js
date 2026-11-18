@@ -104,7 +104,7 @@ const server = http.createServer((req, res) => {
   }
 
   // API: POST /api/waitlist
-  if (pathname === '/api/waitlist' && req.method === 'POST') {
+  if ((pathname === '/api/waitlist' || (pathname && pathname.endsWith('/waitlist')) || (req.url && req.url.includes('/api/waitlist'))) && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => {
       body += chunk;
