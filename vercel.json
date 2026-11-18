@@ -1,5 +1,9 @@
 {
-  "buildCommand": "echo 'Building static site'",
-  "outputDirectory": ".",
-  "cleanUrls": true
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/server.js"
+    }
+  ]
 }
