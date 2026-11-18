@@ -2,10 +2,9 @@
   "name": "hold-keepers",
   "version": "1.0.0",
   "description": "Hold Keepers — High-converting waitlist landing page for Stripe SaaS retention and churn reduction",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "start": "node local-server.js",
+    "dev": "node --watch local-server.js"
   },
   "keywords": [
     "hold-keepers",
