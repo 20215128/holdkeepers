@@ -205,12 +205,6 @@ const server = http.createServer((req, res) => {
           referralCode: newLead.referralCode,
           totalSignups: BASE_QUEUE_OFFSET + waitlist.length
         });
-          success: true,
-          email: newLead.email,
-          position: newLead.position,
-          referralCode: newLead.referralCode,
-          totalSignups: BASE_QUEUE_OFFSET + waitlist.length
-        });
       } catch (err) {
         console.error('Waitlist POST error:', err);
         return sendJson(res, 500, { error: 'Internal server error. Please try again.' });
