@@ -114,6 +114,7 @@ const server = http.createServer((req, res) => {
     req.on('end', async () => {
       try {
         const payload = JSON.parse(body || '{}');
+        const name = (payload.name || '').trim() || 'Founder';
         const email = (payload.email || '').trim().toLowerCase();
         const usingStripe = (payload.usingStripe || 'Yes').trim();
         const customerCount = (payload.customerCount || 'Not specified').trim();
@@ -131,6 +132,7 @@ const server = http.createServer((req, res) => {
           return sendJson(res, 200, {
             success: true,
             alreadyRegistered: true,
+            name: existing.name || name,
             email: existing.email,
             position: existing.position,
             referralCode: existing.referralCode,
@@ -151,6 +153,7 @@ const server = http.createServer((req, res) => {
         const newPosition = BASE_QUEUE_OFFSET + waitlist.length + 1;
 
         const newLead = {
+          name,
           email,
           usingStripe,
           customerCount,
@@ -164,25 +167,44 @@ const server = http.createServer((req, res) => {
         waitlist.push(newLead);
         saveWaitlist(waitlist);
 
-        // Optional Webhook notification (Discord / Slack / Zapier / Google Sheets)
-        const webhookUrl = process.env.NOTIFICATION_WEBHOOK || process.env.DISCORD_WEBHOOK || process.env.SLACK_WEBHOOK;
-        if (webhookUrl && typeof fetch !== 'undefined') {
+        // 1. Google Sheets Webhook
+        const sheetWebhook = process.env.NOTIFICATION_WEBHOOK || process.env.GOOGLE_SHEETS_WEBHOOK;
+        if (sheetWebhook && !sheetWebhook.includes('discord.com') && typeof fetch !== 'undefined') {
           try {
-            const hookPayload = webhookUrl.includes('discord.com')
-              ? { content: `🛡️ **New Hold Keepers Lead!**\n📧 Email: \`${email}\`\n💳 Stripe: ${usingStripe}\n👥 Customers: ${customerCount}\n🔢 Queue: #${newPosition}` }
-              : newLead;
-
-            await fetch(webhookUrl, {
+            await fetch(sheetWebhook, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(hookPayload)
+              body: JSON.stringify(newLead)
             });
           } catch (hookErr) {
-            console.error('Webhook error:', hookErr);
+            console.error('Sheet webhook error:', hookErr);
+          }
+        }
+
+        // 2. Discord Webhook
+        const discordWebhook = process.env.DISCORD_WEBHOOK || (sheetWebhook && sheetWebhook.includes('discord.com') ? sheetWebhook : null);
+        if (discordWebhook && typeof fetch !== 'undefined') {
+          try {
+            await fetch(discordWebhook, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                content: `🛡️ **New Hold Keepers Lead!**\n👤 **Name:** ${name}\n📧 **Email:** \`${email}\`\n💳 **Stripe:** ${usingStripe}\n👥 **Customers:** ${customerCount}\n🔢 **Queue:** #${newPosition}`
+              })
+            });
+          } catch (hookErr) {
+            console.error('Discord webhook error:', hookErr);
           }
         }
 
         return sendJson(res, 200, {
+          success: true,
+          name: newLead.name,
+          email: newLead.email,
+          position: newLead.position,
+          referralCode: newLead.referralCode,
+          totalSignups: BASE_QUEUE_OFFSET + waitlist.length
+        });
           success: true,
           email: newLead.email,
           position: newLead.position,

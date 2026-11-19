@@ -738,8 +738,16 @@
 
       <form id="main-waitlist-form" class="space-y-4 max-w-md mx-auto">
         <div>
+          <label for="form-name" class="block text-xs font-sans font-bold uppercase tracking-wider text-slate-500 mb-2">
+            Your Name <span class="text-brand-600">*</span>
+          </label>
+          <input type="text" id="form-name" required placeholder="Alex Rivers"
+            class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-slate-900 placeholder-slate-400 text-sm font-sans transition-all outline-none">
+        </div>
+
+        <div>
           <label for="form-email" class="block text-xs font-sans font-bold uppercase tracking-wider text-slate-500 mb-2">
-            Email <span class="text-brand-600">*</span>
+            Work / Founder Email <span class="text-brand-600">*</span>
           </label>
           <input type="email" id="form-email" required placeholder="you@yourcompany.com"
             class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-slate-900 placeholder-slate-400 text-sm font-sans transition-all outline-none">
@@ -790,7 +798,7 @@
         <div class="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto mb-6 text-3xl">🎉</div>
         <h3 class="font-sans font-black text-2xl text-slate-900 mb-2">You're on the list!</h3>
         <p class="text-slate-500 text-sm mb-7">
-          Spot reserved for <span id="confirmed-email" class="text-brand-600 font-bold"></span>.
+          Spot reserved for <span id="confirmed-name" class="font-bold text-slate-800"></span> (<span id="confirmed-email" class="text-brand-600 font-semibold"></span>).
         </p>
 
         <div class="p-5 rounded-2xl bg-blue-50 border border-blue-200 mb-4">
@@ -1078,6 +1086,7 @@
     document.getElementById('main-waitlist-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       const btn           = document.getElementById('main-submit-btn');
+      const name          = document.getElementById('form-name').value.trim();
       const email         = document.getElementById('form-email').value.trim();
       const usingStripe   = document.getElementById('form-stripe').value;
       const customerCount = document.getElementById('form-customers').value;
@@ -1089,7 +1098,7 @@
         const res  = await fetch('/api/waitlist', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ email, usingStripe, customerCount, referredBy: refCodeParam })
+          body:    JSON.stringify({ name, email, usingStripe, customerCount, referredBy: refCodeParam })
         });
         const data = await res.json();
 
@@ -1099,6 +1108,7 @@
           success.classList.remove('hidden');
           success.classList.add('animate-slide-in');
 
+          document.getElementById('confirmed-name').textContent  = data.name || name || 'Founder';
           document.getElementById('confirmed-email').textContent = data.email;
           document.getElementById('queue-position').textContent  = '#' + data.position;
 

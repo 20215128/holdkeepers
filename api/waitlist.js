@@ -36,12 +36,13 @@ module.exports = async (req, res) => {
       }
     }
 
-    const { email, usingStripe, customerCount, referredBy } = body || {};
+    const { name, email, usingStripe, customerCount, referredBy } = body || {};
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return res.status(400).json({ success: false, error: 'Valid email is required.' });
     }
 
+    const cleanName = (name || '').trim() || 'Founder';
     const cleanEmail = email.trim().toLowerCase();
     const referralCode = generateReferralCode();
     
@@ -51,6 +52,7 @@ module.exports = async (req, res) => {
     const position = baseOffset + randomOffset;
 
     const leadData = {
+      name: cleanName,
       email: cleanEmail,
       usingStripe: usingStripe || 'Not specified',
       customerCount: customerCount || 'Not specified',
@@ -60,23 +62,33 @@ module.exports = async (req, res) => {
       timestamp: new Date().toISOString()
     };
 
-    // If a webhook URL is configured (Discord, Slack, Zapier, Make, or Google Sheets Apps Script)
-    const webhookUrl = process.env.NOTIFICATION_WEBHOOK || process.env.DISCORD_WEBHOOK || process.env.SLACK_WEBHOOK;
-    if (webhookUrl && typeof fetch !== 'undefined') {
+    // 1. Google Sheets Webhook (or general NOTIFICATION_WEBHOOK)
+    const sheetWebhook = process.env.NOTIFICATION_WEBHOOK || process.env.GOOGLE_SHEETS_WEBHOOK;
+    if (sheetWebhook && !sheetWebhook.includes('discord.com') && typeof fetch !== 'undefined') {
       try {
-        const payload = webhookUrl.includes('discord.com')
-          ? {
-              content: `🛡️ **New Hold Keepers Lead!**\n📧 Email: \`${cleanEmail}\`\n💳 Using Stripe: ${leadData.usingStripe}\n👥 Customers: ${leadData.customerCount}\n🔢 Queue: #${position}`
-            }
-          : leadData;
-
-        await fetch(webhookUrl, {
+        await fetch(sheetWebhook, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(leadData)
         });
       } catch (err) {
-        console.error('Webhook notification error:', err);
+        console.error('Google Sheets notification error:', err);
+      }
+    }
+
+    // 2. Discord Webhook
+    const discordWebhook = process.env.DISCORD_WEBHOOK || (sheetWebhook && sheetWebhook.includes('discord.com') ? sheetWebhook : null);
+    if (discordWebhook && typeof fetch !== 'undefined') {
+      try {
+        await fetch(discordWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: `🛡️ **New Hold Keepers Lead!**\n👤 **Name:** ${cleanName}\n📧 **Email:** \`${cleanEmail}\`\n💳 **Using Stripe:** ${leadData.usingStripe}\n👥 **Customers:** ${leadData.customerCount}\n🔢 **Queue:** #${position}`
+          })
+        });
+      } catch (err) {
+        console.error('Discord webhook error:', err);
       }
     }
 
@@ -84,6 +96,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Added to waitlist successfully',
+      name: cleanName,
       email: cleanEmail,
       position,
       referralCode
